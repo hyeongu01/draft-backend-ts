@@ -1,6 +1,6 @@
 export class LoginParamsDto {
   provider: string;
-  provideId: string;
+  providerId: string;
   email: string;
   nickname: string;
 }
