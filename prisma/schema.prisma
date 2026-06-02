@@ -1,0 +1,52 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "./generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id       String @id @default(uuid()) @db.Char(32)
+  nickname String @db.VarChar(255)
+  email    String @unique @db.VarChar(255)
+
+  createdAt DateTime @map("created_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  auths  UserAuth[]
+  tokens RefreshToken[]
+
+  @@map("users")
+}
+
+model UserAuth {
+  id         Int    @id @default(autoincrement()) @db.UnsignedInt
+  provider   String @db.VarChar(20) // github, google
+  providerId String @db.VarChar(255) @map("provider_id")
+
+  userId String @db.Char(32) @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @map("created_at") @db.DateTime(3)
+
+  @@unique([provider, providerId])
+  @@map("user_auths")
+}
+
+model RefreshToken {
+  id       Int     @id @default(autoincrement()) @db.UnsignedInt
+  deviceId String? @db.Char(32) @map("device_id") // 디바이스에서 생성한 uuid 값 (추후 필요 시 사용)
+  token    String  @db.Char(64) // refreshToken 의 sha256 해시값
+
+  userId String @db.Char(32) @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @map("created_at") @db.DateTime(3)
+  revokedAt DateTime? @db.DateTime(3) @map("revoked_at")
+
+  @@unique([deviceId, userId])
+  @@map("refresh_tokens")
+}
