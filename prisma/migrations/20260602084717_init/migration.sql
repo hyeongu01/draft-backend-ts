@@ -1,10 +1,10 @@
 -- CreateTable
 CREATE TABLE `users` (
-    `id` CHAR(32) NOT NULL,
+    `id` CHAR(36) NOT NULL,
     `nickname` VARCHAR(255) NOT NULL,
     `email` VARCHAR(255) NOT NULL,
-    `created_at` DATETIME(3) NOT NULL,
-    `updated_at` DATETIME(3) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `users_email_key`(`email`),
     PRIMARY KEY (`id`)
@@ -15,8 +15,8 @@ CREATE TABLE `user_auths` (
     `id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
     `provider` VARCHAR(20) NOT NULL,
     `provider_id` VARCHAR(255) NOT NULL,
-    `user_id` CHAR(32) NOT NULL,
-    `created_at` DATETIME(3) NOT NULL,
+    `user_id` CHAR(36) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `user_auths_provider_provider_id_key`(`provider`, `provider_id`),
     PRIMARY KEY (`id`)
@@ -25,10 +25,10 @@ CREATE TABLE `user_auths` (
 -- CreateTable
 CREATE TABLE `refresh_tokens` (
     `id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
-    `device_id` CHAR(32) NULL,
+    `device_id` CHAR(36) NULL,
     `token` CHAR(64) NOT NULL,
-    `user_id` CHAR(32) NOT NULL,
-    `created_at` DATETIME(3) NOT NULL,
+    `user_id` CHAR(36) NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `revoked_at` DATETIME(3) NULL,
 
     UNIQUE INDEX `refresh_tokens_device_id_user_id_key`(`device_id`, `user_id`),

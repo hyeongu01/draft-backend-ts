@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Google Auth Test</title>
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 40px; gap: 20px; }
+    pre { background: #f4f4f4; padding: 16px; border-radius: 6px; width: 100%; max-width: 640px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+    label { font-size: 13px; color: #555; }
+    input { width: 320px; padding: 6px 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h2>Google Auth Test</h2>
+
+  <div>
+    <label>Backend URL</label><br>
+    <input id="backendUrl" value="http://localhost:3000/auth/google/callback" />
+  </div>
+
+  <div>
+    <label>Google Client ID</label><br>
+    <input id="clientId" placeholder="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com" />
+  </div>
+
+  <button onclick="initGoogle()">Google 로그인 버튼 렌더링</button>
+
+  <div id="g_id_signin"></div>
+
+  <pre id="result">결과가 여기 표시됩니다.</pre>
+
+  <script>
+    function initGoogle() {
+      const clientId = document.getElementById('clientId').value.trim();
+      if (!clientId) { alert('Client ID를 입력하세요'); return; }
+
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleCredential,
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById('g_id_signin'),
+        { theme: 'outline', size: 'large' }
+      );
+    }
+
+    async function handleCredential(response) {
+      const credential = response.credential;
+      const url = document.getElementById('backendUrl').value.trim();
+
+      document.getElementById('result').textContent = '요청 중...';
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential }),
+        });
+
+        const data = await res.json();
+        document.getElementById('result').textContent =
+          `status: ${res.status}\n\n` + JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById('result').textContent = 'Error: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
