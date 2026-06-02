@@ -5,9 +5,9 @@ import CONFIG from '@/config/config';
 @Injectable()
 export class GoogleAuthService {
   private readonly client = new OAuth2Client(
-    CONFIG.GOOGLE_CLIENT_ID,
-    CONFIG.GOOGLE_CLIENT_SECRET,
-    CONFIG.GOOGLE_REDIRECT_URI,
+    CONFIG.google.clientId,
+    CONFIG.google.clientSecret,
+    CONFIG.google.redirectUri,
   );
 
   getAuthUrl(): string {
@@ -23,7 +23,7 @@ export class GoogleAuthService {
 
     const ticket = await this.client.verifyIdToken({
       idToken: tokens.id_token!,
-      audience: CONFIG.GOOGLE_CLIENT_ID,
+      audience: CONFIG.google.clientId,
     });
 
     return ticket.getPayload();
@@ -32,7 +32,7 @@ export class GoogleAuthService {
   async verify(idToken: string) {
     const ticket = await this.client.verifyIdToken({
       idToken,
-      audience: CONFIG.GOOGLE_CLIENT_ID,
+      audience: CONFIG.google.clientId,
     });
 
     return ticket.getPayload();

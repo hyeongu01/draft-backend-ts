@@ -3,6 +3,8 @@ import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
 import { LoginParamsDto } from '@/modules/auth/dto/login-params.dto';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@/prisma/client';
+import { createHash } from 'crypto';
+import CONFIG from '@/config/config';
 
 @Injectable()
 export class AuthService {
@@ -11,34 +13,81 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async login(params: LoginParamsDto) {
-    const user: User =
-      (await this.prismaService.userAuth.findUnique({
-        where: {
-          provider_providerId: {
-            provider: params.provider,
-            providerId: params.providerId,
-          },
+  private async generateToken(user: User): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(
+        { id: user.id },
+        {
+          expiresIn: CONFIG.jwt.accessExpiresIn,
+          secret: CONFIG.jwt.accessSecret,
         },
-        select: { user: true },
-      })) ??
-      (await this.prismaService.user.create({
-        data: {
-          nickname: params.nickname,
-          email: params.email,
+      ),
+      this.jwtService.signAsync(
+        { id: user.id },
+        {
+          expiresIn: CONFIG.jwt.refreshExpiresIn,
+          secret: CONFIG.jwt.refreshSecret,
+        },
+      ),
+    ]);
 
+    const hashedRefreshToken: string = createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+
+    await this.prismaService.refreshToken.upsert({
+      where: {
+        deviceId_userId: {
+          userId: user.id,
+          deviceId: 'sample',
+        },
+      },
+      create: {
+        userId: user.id,
+        deviceId: 'sample',
+        token: hashedRefreshToken,
+      },
+      update: {
+        token: hashedRefreshToken,
+      },
+    });
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async login(params: LoginParamsDto) {
+    const { provider, providerId, nickname, email } = params;
+
+    let { user } = (await this.prismaService.userAuth.findUnique({
+      where: {
+        provider_providerId: {
+          provider,
+          providerId,
+        },
+      },
+      select: { user: true },
+    })) ?? { user: null };
+
+    if (!user) {
+      user = await this.prismaService.user.create({
+        data: {
+          nickname,
+          email,
           auths: {
             create: {
-              provider: params.provider,
-              providerId: params.providerId,
+              provider,
+              providerId,
             },
           },
         },
-      }));
+      });
+    }
 
-    // jwt 토큰 발급
-    return {
-      message: 'Logged in',
-    };
+    return this.generateToken(user);
   }
 }

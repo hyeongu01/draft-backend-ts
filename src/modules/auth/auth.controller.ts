@@ -27,15 +27,19 @@ export class AuthController {
     const payload = await this.googleAuthService.exchangeCode(code);
     if (!payload) throw new BadRequestException('payload not found');
 
-    const { sub: provideId, name: nickname, email } = payload;
+    const { sub: providerId, name: nickname, email } = payload;
     if (nickname === undefined)
       throw new BadRequestException('nickname not found');
     if (email === undefined) throw new BadRequestException('email not found');
-    return await this.authService.login({
-      provideId,
+    const data = await this.authService.login({
+      providerId,
       nickname,
       email,
       provider: 'google',
     });
+    return {
+      data,
+      timestamp: new Date().toISOString(),
+    };
   }
 }
