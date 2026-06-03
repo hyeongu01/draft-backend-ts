@@ -58,34 +58,33 @@ export class AuthService {
     };
   }
 
-  async login(params: LoginParamsDto): Promise<LoginResponseType> {
+  private async upsertUserAuth(params: LoginParamsDto): Promise<User> {
     const { provider, providerId, nickname, email } = params;
-
-    let { user } = (await this.prismaService.userAuth.findUnique({
+    const { user } = await this.prismaService.userAuth.upsert({
       where: {
         provider_providerId: {
           provider,
           providerId,
         },
       },
-      select: { user: true },
-    })) ?? { user: null };
-
-    if (!user) {
-      user = await this.prismaService.user.create({
-        data: {
-          nickname,
-          email,
-          auths: {
-            create: {
-              provider,
-              providerId,
-            },
+      create: {
+        provider,
+        providerId,
+        user: {
+          create: {
+            nickname,
+            email,
           },
         },
-      });
-    }
+      },
+      update: {},
+      select: { user: true },
+    });
+    return user;
+  }
 
+  async login(params: LoginParamsDto): Promise<LoginResponseType> {
+    let user: User = await this.upsertUserAuth(params);
     return this.generateToken(user);
   }
 }
