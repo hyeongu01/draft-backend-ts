@@ -1,7 +1,7 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
-import { AuthGuard } from '@/guards/auth/auth.guard';
-import { CurrentUser } from '@/common/decorayors/current-user.decorator';
+import { AuthGuard } from '@/common/guards/auth/auth.guard';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ResponseSuccess } from '@/common/types/response.type';
 import { type User } from '@/prisma/client';
 

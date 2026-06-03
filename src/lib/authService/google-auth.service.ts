@@ -19,8 +19,6 @@ export class GoogleAuthService {
 
   async exchangeCode(code: string) {
     const { tokens } = await this.client.getToken(code);
-    this.client.setCredentials(tokens);
-
     const ticket = await this.client.verifyIdToken({
       idToken: tokens.id_token!,
       audience: CONFIG.google.clientId,

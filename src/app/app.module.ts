@@ -2,12 +2,18 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from '@/modules/users/users.module';
-import { PrismaModule } from '@/lib/prisma/prisma/prisma.module';
 import { AuthModule } from '@/modules/auth/auth.module';
-import { TestsModule } from '@/modules/tests/tests.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [UsersModule, PrismaModule, AuthModule, TestsModule],
+  imports: [
+    UsersModule,
+    AuthModule,
+    {
+      global: true,
+      module: JwtModule,
+    },
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
