@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
 import { LoginParamsDto } from '@/modules/auth/dto/login-params.dto';
 import { JwtService } from '@nestjs/jwt';
@@ -6,12 +10,14 @@ import { User } from '@/prisma/client';
 import { createHash } from 'crypto';
 import CONFIG from '@/config/config';
 import { type LoginResponseType } from '@/modules/auth/type/loginResponse.type';
+import { UsersService } from '@/modules/users/users.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
     private jwtService: JwtService,
+    private readonly usersService: UsersService,
   ) {}
 
   private async generateToken(user: User): Promise<LoginResponseType> {
@@ -84,7 +90,23 @@ export class AuthService {
   }
 
   async login(params: LoginParamsDto): Promise<LoginResponseType> {
-    let user: User = await this.upsertUserAuth(params);
+    const user: User = await this.upsertUserAuth(params);
+    return this.generateToken(user);
+  }
+
+  async refresh(token: string): Promise<LoginResponseType> {
+    let id: string;
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: CONFIG.jwt.refreshSecret,
+      });
+      id = payload.id;
+    } catch {
+      throw new UnauthorizedException('token 이 유효하지 않습니다.');
+    }
+
+    const user: User | null = await this.usersService.findOneById(id);
+    if (!user) throw new NotFoundException('유저를 찾을 수 없습니다.');
     return this.generateToken(user);
   }
 }

@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
+  Post,
   Query,
   Redirect,
 } from '@nestjs/common';
@@ -9,6 +11,7 @@ import { AuthService } from './auth.service';
 import { GoogleAuthService } from '@/lib/authService/google-auth.service';
 import { ResponseSuccess } from '@/common/types/response.type';
 import { LoginResponseType } from '@/modules/auth/type/loginResponse.type';
+import { RefreshDto } from '@/modules/auth/dto/refresh.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -17,13 +20,13 @@ export class AuthController {
     private readonly googleAuthService: GoogleAuthService,
   ) {}
 
-  @Get('/google')
+  @Get('google')
   @Redirect()
   googleLogin() {
     return { url: this.googleAuthService.getAuthUrl() };
   }
 
-  @Get('/google/callback')
+  @Get('google/callback')
   async googleOAuthCallback(
     @Query('code') code: string,
   ): Promise<ResponseSuccess<LoginResponseType>> {
@@ -42,6 +45,16 @@ export class AuthController {
       email,
       provider: 'google',
     });
+    return ResponseSuccess.ok<LoginResponseType>(data);
+  }
+
+  @Post('refresh')
+  async refresh(
+    @Body() refreshDto: RefreshDto,
+  ): Promise<ResponseSuccess<LoginResponseType>> {
+    const data: LoginResponseType = await this.authService.refresh(
+      refreshDto.token,
+    );
     return ResponseSuccess.ok<LoginResponseType>(data);
   }
 }
