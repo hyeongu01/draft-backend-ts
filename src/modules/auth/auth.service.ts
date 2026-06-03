@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '@/prisma/client';
 import { createHash } from 'crypto';
 import CONFIG from '@/config/config';
+import { type LoginResponseType } from '@/modules/auth/type/loginResponse.type';
 
 @Injectable()
 export class AuthService {
@@ -13,10 +14,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  private async generateToken(user: User): Promise<{
-    accessToken: string;
-    refreshToken: string;
-  }> {
+  private async generateToken(user: User): Promise<LoginResponseType> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
         { id: user.id },
@@ -60,7 +58,7 @@ export class AuthService {
     };
   }
 
-  async login(params: LoginParamsDto) {
+  async login(params: LoginParamsDto): Promise<LoginResponseType> {
     const { provider, providerId, nickname, email } = params;
 
     let { user } = (await this.prismaService.userAuth.findUnique({
