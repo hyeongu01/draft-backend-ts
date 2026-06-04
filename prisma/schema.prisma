@@ -13,8 +13,9 @@ model User {
   nickname String @db.VarChar(255)
   email    String @unique @db.VarChar(255)
 
-  createdAt DateTime @map("created_at") @db.DateTime(3) @default(now())
-  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3) @default(now())
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt DateTime? @map("deleted_at") @db.DateTime(3)
 
   auths  UserAuth[]
   tokens RefreshToken[]
@@ -25,12 +26,12 @@ model User {
 model UserAuth {
   id         Int    @id @default(autoincrement()) @db.UnsignedInt
   provider   String @db.VarChar(20) // github, google
-  providerId String @db.VarChar(255) @map("provider_id")
+  providerId String @map("provider_id") @db.VarChar(255)
 
-  userId String @db.Char(36) @map("user_id")
+  userId String @map("user_id") @db.Char(36)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @map("created_at") @db.DateTime(3) @default(now())
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
 
   @@unique([provider, providerId])
   @@map("user_auths")
@@ -38,14 +39,14 @@ model UserAuth {
 
 model RefreshToken {
   id       Int     @id @default(autoincrement()) @db.UnsignedInt
-  deviceId String? @db.Char(36) @map("device_id") // 디바이스에서 생성한 uuid 값 (추후 필요 시 사용)
+  deviceId String? @map("device_id") @db.Char(36) // 디바이스에서 생성한 uuid 값 (추후 필요 시 사용)
   token    String  @db.Char(64) // refreshToken 의 sha256 해시값
 
-  userId String @db.Char(36) @map("user_id")
+  userId String @map("user_id") @db.Char(36)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime  @map("created_at") @db.DateTime(3) @default(now())
-  revokedAt DateTime? @db.DateTime(3) @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  revokedAt DateTime? @map("revoked_at") @db.DateTime(3)
 
   @@unique([deviceId, userId])
   @@map("refresh_tokens")

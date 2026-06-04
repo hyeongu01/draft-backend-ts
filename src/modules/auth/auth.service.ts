@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
 import { LoginParamsDto } from '@/modules/auth/dto/login-params.dto';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@/prisma/client';
+import { RefreshToken, User } from '@/prisma/client';
 import { createHash } from 'crypto';
 import CONFIG from '@/config/config';
 import { type LoginResponseType } from '@/modules/auth/type/loginResponse.type';
@@ -16,8 +16,8 @@ import { UsersService } from '@/modules/users/users.service';
 export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
-    private jwtService: JwtService,
     private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
   ) {}
 
   private async generateToken(user: User): Promise<LoginResponseType> {
@@ -107,6 +107,12 @@ export class AuthService {
 
     const user: User | null = await this.usersService.findOneById(id);
     if (!user) throw new NotFoundException('유저를 찾을 수 없습니다.');
+
+    const oldToken: RefreshToken | null =
+      await this.prismaService.refreshToken.findFirst({
+        where: { token },
+      });
+    if (!oldToken) throw new NotFoundException('비활성화된 토큰입니다.');
     return this.generateToken(user);
   }
 }
