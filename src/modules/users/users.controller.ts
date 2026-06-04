@@ -5,19 +5,23 @@ import { ResponseSuccess } from '@/common/types/response.type';
 import { type User } from '@/prisma/client';
 import { UsersService } from '@/modules/users/users.service';
 import { UpdateUserDto } from '@/modules/users/dto/update-user.dto';
+import { ApiBearerAuth, ApiInternalServerErrorResponse } from '@nestjs/swagger';
 
+@ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Get('me')
   @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   getMyProfile(@CurrentUser() user: User): ResponseSuccess<User> {
     return ResponseSuccess.ok(user);
   }
 
   @Put('me')
   @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   async updateMyProfile(
     @CurrentUser() user: User,
     @Body() updateUserDto: UpdateUserDto,
@@ -28,6 +32,7 @@ export class UsersController {
 
   @Delete('me')
   @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   async deleteMyProfile(
     @CurrentUser() user: User,
   ): Promise<ResponseSuccess<object>> {

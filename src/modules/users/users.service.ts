@@ -6,7 +6,7 @@ import { createHash } from 'crypto';
 
 @Injectable()
 export class UsersService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async findOneById(id: string): Promise<User | null> {
     return this.prismaService.user.findFirst({

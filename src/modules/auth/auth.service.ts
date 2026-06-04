@@ -4,12 +4,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
-import { LoginParamsDto } from '@/modules/auth/dto/login-params.dto';
+import { type LoginParamsType } from '@/modules/auth/type/login-params.type';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshToken, User } from '@/prisma/client';
 import { createHash } from 'crypto';
 import CONFIG from '@/config/config';
-import { type LoginResponseType } from '@/modules/auth/type/loginResponse.type';
+import { type LoginResponseType } from '@/modules/auth/type/login-response.type';
 import { UsersService } from '@/modules/users/users.service';
 
 @Injectable()
@@ -65,7 +65,7 @@ export class AuthService {
     };
   }
 
-  private async upsertUserAuth(params: LoginParamsDto): Promise<User> {
+  private async upsertUserAuth(params: LoginParamsType): Promise<User> {
     const { provider, providerId, nickname, email } = params;
     const { user } = await this.prismaService.userAuth.upsert({
       where: {
@@ -90,7 +90,7 @@ export class AuthService {
     return user;
   }
 
-  async login(params: LoginParamsDto): Promise<LoginResponseType> {
+  async login(params: LoginParamsType): Promise<LoginResponseType> {
     const user: User = await this.upsertUserAuth(params);
     return this.generateToken(user);
   }
@@ -122,7 +122,7 @@ export class AuthService {
 
   async logout(user: User): Promise<void> {
     await this.prismaService.refreshToken.updateMany({
-      where: { userId: user.id },
+      where: { userId: user.id, revokedAt: null },
       data: { revokedAt: new Date() },
     });
   }

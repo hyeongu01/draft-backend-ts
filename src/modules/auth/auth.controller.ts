@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   Post,
   Query,
   Redirect,
@@ -11,12 +12,23 @@ import {
 import { AuthService } from './auth.service';
 import { GoogleAuthService } from '@/lib/authService/google-auth.service';
 import { ResponseSuccess } from '@/common/types/response.type';
-import { LoginResponseType } from '@/modules/auth/type/loginResponse.type';
+import { LoginResponseType } from '@/modules/auth/type/login-response.type';
 import { RefreshDto } from '@/modules/auth/dto/refresh.dto';
 import { AuthGuard } from '@/common/guards/auth/auth.guard';
 import type { User } from '@/prisma/client';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import {
+  ApiExcludeEndpoint,
+  ApiExtraModels,
+  ApiFoundResponse,
+  ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  getSchemaPath,
+} from '@nestjs/swagger';
 
+@ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -26,11 +38,28 @@ export class AuthController {
 
   @Get('google')
   @Redirect()
+  @ApiOperation({
+    summary: '구글 로그인',
+    description: '구글 OAuth 동의 화면으로 302 리다이렉트 합니다.',
+  })
+  @ApiFoundResponse({
+    description: '구글 OAuth 인증 페이지로 리다이렉트',
+    headers: {
+      Location: {
+        description: '리다이렉트 될 구글 인증 URL',
+        schema: {
+          type: 'string',
+          example: "'https://accounts.google.com/o/oauth2/v2/auth?...",
+        },
+      },
+    },
+  })
   googleLogin() {
     return { url: this.googleAuthService.getAuthUrl() };
   }
 
   @Get('google/callback')
+  @ApiExcludeEndpoint()
   async googleOAuthCallback(
     @Query('code') code: string,
   ): Promise<ResponseSuccess<LoginResponseType>> {
@@ -53,6 +82,19 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'access token 재발급' })
+  @ApiExtraModels(ResponseSuccess, LoginResponseType)
+  @ApiOkResponse({
+    description: 'Success',
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(ResponseSuccess) },
+        { properties: { data: { $ref: getSchemaPath(LoginResponseType) } } },
+      ],
+    },
+  })
+  @ApiNotFoundResponse({ description: 'Not found' })
   async refresh(
     @Body() refreshDto: RefreshDto,
   ): Promise<ResponseSuccess<LoginResponseType>> {
@@ -63,6 +105,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @HttpCode(200)
   @UseGuards(AuthGuard)
   async logout(@CurrentUser() user: User) {
     await this.authService.logout(user);
