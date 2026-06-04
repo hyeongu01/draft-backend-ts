@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { GoogleAuthService } from '@/lib/authService/google-auth.service';
 import { PrismaModule } from '@/lib/prisma/prisma/prisma.module';
 import { UsersModule } from '@/modules/users/users.module';
+import { AuthGuardModule } from '@/common/guards/auth/auth-guard.module';
 
 @Module({
   imports: [PrismaModule, UsersModule],

@@ -6,12 +6,16 @@ import {
   Post,
   Query,
   Redirect,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthService } from '@/lib/authService/google-auth.service';
 import { ResponseSuccess } from '@/common/types/response.type';
 import { LoginResponseType } from '@/modules/auth/type/loginResponse.type';
 import { RefreshDto } from '@/modules/auth/dto/refresh.dto';
+import { AuthGuard } from '@/common/guards/auth/auth.guard';
+import type { User } from '@/prisma/client';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -56,5 +60,12 @@ export class AuthController {
       refreshDto.token,
     );
     return ResponseSuccess.ok<LoginResponseType>(data);
+  }
+
+  @Post('logout')
+  @UseGuards(AuthGuard)
+  async logout(@CurrentUser() user: User) {
+    await this.authService.logout(user);
+    return ResponseSuccess.ok({});
   }
 }

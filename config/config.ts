@@ -18,7 +18,7 @@ type ConfigType = {
 
 const CONFIG: ConfigType = {
   DATABASE_URL: process.env.DATABASE_URL!,
-  PORT: Number(process.env.PORT) ?? 3000,
+  PORT: Number(process.env.PORT) || 3000,
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,

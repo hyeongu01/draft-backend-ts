@@ -56,6 +56,7 @@ export class AuthService {
       },
       update: {
         token: hashedRefreshToken,
+        revokedAt: null,
       },
     });
     return {
@@ -108,11 +109,21 @@ export class AuthService {
     const user: User | null = await this.usersService.findOneById(id);
     if (!user) throw new NotFoundException('유저를 찾을 수 없습니다.');
 
+    const hashedToken: string = createHash('sha256')
+      .update(token)
+      .digest('hex');
     const oldToken: RefreshToken | null =
       await this.prismaService.refreshToken.findFirst({
-        where: { token },
+        where: { token: hashedToken, revokedAt: null },
       });
     if (!oldToken) throw new NotFoundException('비활성화된 토큰입니다.');
     return this.generateToken(user);
+  }
+
+  async logout(user: User): Promise<void> {
+    await this.prismaService.refreshToken.updateMany({
+      where: { userId: user.id },
+      data: { revokedAt: new Date() },
+    });
   }
 }
