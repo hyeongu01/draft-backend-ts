@@ -20,7 +20,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  private async generateToken(user: User): Promise<LoginResponseType> {
+  private async generateToken(
+    user: User,
+    deviceId: string,
+  ): Promise<LoginResponseType> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
         { id: user.id },
@@ -46,12 +49,12 @@ export class AuthService {
       where: {
         deviceId_userId: {
           userId: user.id,
-          deviceId: 'sample',
+          deviceId,
         },
       },
       create: {
         userId: user.id,
-        deviceId: 'sample',
+        deviceId,
         token: hashedRefreshToken,
       },
       update: {
@@ -92,10 +95,10 @@ export class AuthService {
 
   async login(params: LoginParamsType): Promise<LoginResponseType> {
     const user: User = await this.upsertUserAuth(params);
-    return this.generateToken(user);
+    return this.generateToken(user, params.deviceId);
   }
 
-  async refresh(token: string): Promise<LoginResponseType> {
+  async refresh(token: string, deviceId: string): Promise<LoginResponseType> {
     let id: string;
     try {
       const payload = await this.jwtService.verifyAsync(token, {
@@ -114,10 +117,10 @@ export class AuthService {
       .digest('hex');
     const oldToken: RefreshToken | null =
       await this.prismaService.refreshToken.findFirst({
-        where: { token: hashedToken, revokedAt: null },
+        where: { token: hashedToken, userId: user.id, revokedAt: null },
       });
     if (!oldToken) throw new NotFoundException('비활성화된 토큰입니다.');
-    return this.generateToken(user);
+    return this.generateToken(user, deviceId);
   }
 
   async logout(user: User): Promise<void> {
