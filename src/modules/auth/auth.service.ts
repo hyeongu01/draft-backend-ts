@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
 import { type LoginParamsType } from '@/modules/auth/type/login-params.type';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { RefreshToken, User } from '@/prisma/client';
 import { createHash } from 'crypto';
 import CONFIG from '@/config/config';
@@ -105,7 +105,9 @@ export class AuthService {
         secret: CONFIG.jwt.refreshSecret,
       });
       id = payload.id;
-    } catch {
+    } catch (e) {
+      if (e instanceof TokenExpiredError)
+        throw new UnauthorizedException('refresh 토큰이 만료되었습니다.');
       throw new UnauthorizedException('token 이 유효하지 않습니다.');
     }
 
@@ -119,6 +121,8 @@ export class AuthService {
       await this.prismaService.refreshToken.findUnique({
         where: { deviceId_userId: { deviceId, userId: user.id } },
       });
+
+    // TODO: refresh 토큰 탈취 문제 (공격자가 토큰 탈취 -> 실제 유저보다 먼저 refresh => 공격자는 앞으로 자유롭게 갱신 가능)
     if (!oldToken || oldToken.revokedAt || oldToken.token !== hashedToken)
       throw new NotFoundException('비활성화된 토큰입니다.');
     return this.generateToken(user, deviceId);

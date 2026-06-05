@@ -11,7 +11,7 @@ datasource db {
 model User {
   id       String @id @default(ulid()) @db.Char(26)
   nickname String @db.VarChar(255)
-  email    String @unique @db.VarChar(255)
+  email    String @unique @db.VarChar(255) // 탈퇴 시 `removed-${id}@deleted.local` 형식으로 뭉갬
 
   createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
@@ -32,7 +32,7 @@ model UserAuth {
   providerId String @map("provider_id") @db.VarChar(255)
 
   userId String @map("user_id") @db.Char(26)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
 
@@ -46,7 +46,7 @@ model RefreshToken {
   token    String @db.Char(64) // refreshToken 의 sha256 해시값
 
   userId String @map("user_id") @db.Char(26)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
 
   createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
   revokedAt DateTime? @map("revoked_at") @db.DateTime(3)
@@ -56,20 +56,23 @@ model RefreshToken {
 }
 
 model Resume {
-  id          String @id @default(ulid()) @db.Char(26)
-  title       String @db.VarChar(255)
-  description String @db.Text // 짧은 설명
-  content     Json   @db.Json
-  likeCount   Int    @default(0) @map("like_count") @db.UnsignedInt
-  careerYears Int    @map("career_years") @db.UnsignedInt
+  id          String  @id @default(ulid()) @db.Char(26)
+  title       String  @db.VarChar(255)
+  description String  @db.VarChar(1000) // 짧은 설명
+  content     Json    @db.Json
+  likeCount   Int     @default(0) @map("like_count") @db.UnsignedInt
+  scrapCount  Int     @default(0) @map("scrap_count") @db.UnsignedInt
+  careerYears Int     @map("career_years") @db.UnsignedInt
+  isPublic    Boolean @default(false) @map("is_public") @db.TinyInt
 
   userId     String      @map("user_id") @db.Char(26)
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id])
   categoryId Int         @map("category_id") @db.UnsignedInt
   category   JobCategory @relation(fields: [categoryId], references: [id])
 
-  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt DateTime? @map("deleted_at") @db.DateTime(3)
 
   likes  ResumeLike[]
   scraps ResumeScrap[]
@@ -79,9 +82,9 @@ model Resume {
 
 model ResumeLike {
   userId   String @map("user_id") @db.Char(26)
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id])
   resumeId String @map("resume_id") @db.Char(26)
-  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resume   Resume @relation(fields: [resumeId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
 
@@ -91,9 +94,9 @@ model ResumeLike {
 
 model ResumeScrap {
   userId   String @map("user_id") @db.Char(26)
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id])
   resumeId String @map("resume_id") @db.Char(26)
-  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resume   Resume @relation(fields: [resumeId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
 
@@ -103,7 +106,7 @@ model ResumeScrap {
 
 model JobGroup {
   id   Int    @id @default(autoincrement()) @db.UnsignedInt
-  name String @unique @map("display_name") @db.VarChar(255)
+  name String @unique @db.VarChar(255)
   slug String @unique @db.VarChar(255)
 
   categories JobCategory[]
