@@ -27,7 +27,7 @@ async function bootstrap() {
     .setDescription('Draft Backend TS')
     .setVersion('1.0')
     .addBearerAuth()
-    .addServer('http://localhost:3000', 'local')
+    .addServer(`http://localhost:${CONFIG.PORT}`, 'local')
     .build();
   const documentFactory = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, documentFactory, {

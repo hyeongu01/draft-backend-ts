@@ -1,3 +1,5 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export type TimeAgoType =
   | '방금 전'
   | `${number}초 전`
@@ -15,7 +17,17 @@ export const toTimeAgo = (date: Date): TimeAgoType => {
   return `${Math.floor(timeTerm / (60 * 60 * 24))}일 전`;
 };
 
-export type DateFormatObject = {
+export class DateFormatObject {
+  @ApiProperty()
   ISOFormat: string;
+
+  @ApiProperty()
   timeAgo: TimeAgoType;
+}
+
+export const dateToDateFormatObject = (date: Date): DateFormatObject => {
+  return {
+    ISOFormat: date.toISOString(),
+    timeAgo: toTimeAgo(date),
+  };
 };

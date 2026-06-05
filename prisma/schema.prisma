@@ -9,9 +9,10 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(ulid()) @db.Char(26)
-  nickname String @db.VarChar(255)
-  email    String @unique @db.VarChar(255) // 탈퇴 시 `removed-${id}@deleted.local` 형식으로 뭉갬
+  id       String  @id @default(ulid()) @db.Char(26)
+  name     String  @db.VarChar(255) // oauth 에서 받아오는 full name
+  nickname String? @db.VarChar(255) // 기본값: null, 온보딩에서 업데이트
+  email    String  @unique @db.VarChar(255) // 탈퇴 시 `removed-${id}@deleted.local` 형식으로 뭉갬
 
   createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
@@ -42,7 +43,7 @@ model UserAuth {
 
 model RefreshToken {
   id       Int    @id @default(autoincrement()) @db.UnsignedInt
-  deviceId String @map("device_id") @db.Char(26) // 디바이스에서 생성한 ulid 값
+  deviceId String @map("device_id") @db.Char(36) // 디바이스에서 생성한 uuid 값
   token    String @db.Char(64) // refreshToken 의 sha256 해시값
 
   userId String @map("user_id") @db.Char(26)

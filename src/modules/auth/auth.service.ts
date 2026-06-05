@@ -65,11 +65,12 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
+      user,
     };
   }
 
   private async upsertUserAuth(params: LoginParamsType): Promise<User> {
-    const { provider, providerId, nickname, email } = params;
+    const { provider, providerId, name, email } = params;
     const { user } = await this.prismaService.userAuth.upsert({
       where: {
         provider_providerId: {
@@ -81,10 +82,7 @@ export class AuthService {
         provider,
         providerId,
         user: {
-          create: {
-            nickname,
-            email,
-          },
+          create: { name, email },
         },
       },
       update: {},
@@ -95,7 +93,11 @@ export class AuthService {
 
   async login(params: LoginParamsType): Promise<LoginResponseType> {
     const user: User = await this.upsertUserAuth(params);
-    return this.generateToken(user, params.deviceId);
+    const { accessToken, refreshToken } = await this.generateToken(
+      user,
+      params.deviceId,
+    );
+    return { accessToken, refreshToken, user };
   }
 
   async refresh(token: string, deviceId: string): Promise<LoginResponseType> {

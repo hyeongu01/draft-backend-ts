@@ -1,10 +1,10 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   HttpCode,
   Post,
-  Query,
   Req,
   Res,
   UnauthorizedException,
@@ -22,6 +22,8 @@ import {
 import { AuthGuard } from '@/common/guards/auth/auth.guard';
 import type { User } from '@/prisma/client';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { GoogleCallbackDto } from '@/modules/auth/dto/google-callback.dto';
+import { ApiResponseSuccess } from '@/common/decorators/api-response-success.decorator';
 import CONFIG from '@/config/config';
 import {
   ApiExcludeEndpoint,
@@ -32,6 +34,7 @@ import {
   ApiOperation,
   getSchemaPath,
 } from '@nestjs/swagger';
+import { UserResponseType } from '@/modules/users/type/user-response.type';
 
 @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
 @Controller('auth')
@@ -94,45 +97,49 @@ export class AuthController {
     return res.redirect(this.googleAuthService.getAuthUrl());
   }
 
-  @Get('google/callback')
-  @ApiExcludeEndpoint()
+  @Post('google/callback')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: '구글 로그인 콜백',
+    description:
+      'google oAuth 는 client 의 callback 으로 리다이렉트 되고, 온보딩에서 입력한 닉네임과 인가 코드를 바디로 받아 로그인을 마친다. refreshToken 은 쿠키로, accessToken 은 바디로 반환합니다.',
+  })
+  @ApiResponseSuccess(AccessTokenResponseType)
   async googleOAuthCallback(
-    @Query('code') code: string,
+    @Body() { code }: GoogleCallbackDto,
     @Req() req: Request,
-    @Res() res: Response,
-  ): Promise<void> {
-    if (!code) throw new BadRequestException('code not found');
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ResponseSuccess<AccessTokenResponseType>> {
     const payload = await this.googleAuthService.exchangeCode(code);
     if (!payload) throw new BadRequestException('payload not found');
 
-    const { sub: providerId, name: nickname, email } = payload;
-    if (nickname === undefined)
-      throw new BadRequestException('nickname not found');
+    const { sub: providerId, email, name } = payload;
     if (email === undefined) throw new BadRequestException('email not found');
+    if (name === undefined) throw new BadRequestException('name not found');
 
     // login 시작 시 심어둔 device_id 쿠키를 읽음 (없으면 신규 발급)
     const deviceId: string =
       req.cookies?.[CONFIG.cookie.deviceIdName] ?? randomUUID();
 
-    const { accessToken, refreshToken }: LoginResponseType =
+    const { accessToken, refreshToken, user }: LoginResponseType =
       await this.authService.login({
         providerId,
-        nickname,
+        name,
         email,
         provider: 'google',
         deviceId,
       });
 
-    // refreshToken 은 HttpOnly 쿠키로, accessToken 은 해시(#)로 프론트에 전달
+    // refreshToken 은 HttpOnly 쿠키로 내려주고, accessToken 은 바디로 반환
     res.cookie(
       CONFIG.cookie.refreshTokenName,
       refreshToken,
       this.refreshTokenCookieOptions(),
     );
-    const redirectUrl = `${CONFIG.FRONTEND_URL}/auth/callback#accessToken=${encodeURIComponent(
+    return ResponseSuccess.ok<AccessTokenResponseType>({
       accessToken,
-    )}`;
-    return res.redirect(redirectUrl);
+      user: UserResponseType.fromUser(user),
+    });
   }
 
   @Post('refresh')
@@ -180,16 +187,18 @@ export class AuthController {
     );
     return ResponseSuccess.ok<AccessTokenResponseType>({
       accessToken: data.accessToken,
+      user: UserResponseType.fromUser(data.user),
     });
   }
 
   @Post('logout')
   @HttpCode(200)
   @UseGuards(AuthGuard)
+  @ApiResponseSuccess()
   async logout(
     @CurrentUser() user: User,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<ResponseSuccess<{}>> {
     await this.authService.logout(user);
     // refresh_token 쿠키 제거 (set 과 동일한 domain/path 여야 삭제됨)
     res.clearCookie(CONFIG.cookie.refreshTokenName, {
