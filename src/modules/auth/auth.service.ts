@@ -116,10 +116,11 @@ export class AuthService {
       .update(token)
       .digest('hex');
     const oldToken: RefreshToken | null =
-      await this.prismaService.refreshToken.findFirst({
-        where: { token: hashedToken, userId: user.id, revokedAt: null },
+      await this.prismaService.refreshToken.findUnique({
+        where: { deviceId_userId: { deviceId, userId: user.id } },
       });
-    if (!oldToken) throw new NotFoundException('비활성화된 토큰입니다.');
+    if (!oldToken || oldToken.revokedAt || oldToken.token !== hashedToken)
+      throw new NotFoundException('비활성화된 토큰입니다.');
     return this.generateToken(user, deviceId);
   }
 
