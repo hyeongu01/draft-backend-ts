@@ -3,6 +3,7 @@ import type { JobCategory, Resume } from '@/prisma/client';
 import { DateFormatObject, dateToDateFormatObject } from '@/common/date-format';
 import { type JsonValue } from '@prisma/client/runtime/client';
 import { ResumeType } from '@/modules/resumes/resumes.type';
+import { CategoryResponseType } from '@/modules/categories/type/categories-response.type';
 
 export class ResumeResponseType {
   @ApiProperty()
@@ -32,16 +33,15 @@ export class ResumeResponseType {
   @ApiProperty()
   userId: string;
 
-  // TODO: category 응답 형식 지정
-  @ApiPropertyOptional()
-  category?: JobCategory;
+  @ApiPropertyOptional({ type: 'number', minimum: 1 })
+  categoryId?: number;
 
   @ApiProperty()
   createdAt: DateFormatObject;
   @ApiProperty()
   updatedAt: DateFormatObject;
 
-  static fromResume(item: ResumeType<['category']>): ResumeResponseType {
+  static fromResume(item: Resume): ResumeResponseType {
     return {
       id: item.id,
       title: item.title,
@@ -52,7 +52,7 @@ export class ResumeResponseType {
       careerYears: item.careerYears ?? undefined,
       isPublic: item.isPublic,
       userId: item.userId,
-      category: item.category ?? undefined,
+      categoryId: item.categoryId ?? undefined,
       createdAt: dateToDateFormatObject(item.createdAt),
       updatedAt: dateToDateFormatObject(item.updatedAt),
     };

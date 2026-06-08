@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Put,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@/common/guards/auth/auth.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ResponseSuccess } from '@/common/types/response.type';
@@ -17,7 +8,6 @@ import { UpdateUserDto } from '@/modules/users/dto/update-user.dto';
 import { ApiBearerAuth, ApiInternalServerErrorResponse } from '@nestjs/swagger';
 import { UserResponseType } from '@/modules/users/type/user-response.type';
 import { ApiResponseSuccess } from '@/common/decorators/api-response-success.decorator';
-import { dateToDateFormatObject } from '@/common/date-format';
 
 @ApiInternalServerErrorResponse({ description: 'Internal Server Error' })
 @Controller('users')

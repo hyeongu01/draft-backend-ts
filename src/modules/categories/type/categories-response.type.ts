@@ -1,12 +1,39 @@
-import { JobGroup } from '@/prisma/client';
+import { type JobGroup } from '@/prisma/client';
 import { DateFormatObject, dateToDateFormatObject } from '@/common/date-format';
 import { CategoryType } from '@/modules/categories/categories.type';
+import { ApiProperty } from '@nestjs/swagger';
+
+export class GroupResponseType implements JobGroup {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  slug: string;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
+}
 
 export class CategoryResponseType {
+  @ApiProperty()
   id: number;
+
+  @ApiProperty()
   name: string;
-  group: JobGroup;
+
+  @ApiProperty()
+  group: GroupResponseType;
+
+  @ApiProperty()
   createdAt: DateFormatObject;
+
+  @ApiProperty()
   updatedAt: DateFormatObject;
 
   static fromCategory(item: CategoryType<['group']>): CategoryResponseType {

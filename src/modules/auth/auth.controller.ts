@@ -26,6 +26,7 @@ import { GoogleCallbackDto } from '@/modules/auth/dto/google-callback.dto';
 import { ApiResponseSuccess } from '@/common/decorators/api-response-success.decorator';
 import CONFIG from '@/config/config';
 import {
+  ApiBearerAuth,
   ApiFoundResponse,
   ApiInternalServerErrorResponse,
   ApiOperation,
@@ -177,6 +178,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(200)
   @UseGuards(AuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'logout - 디바이스 로그아웃 / 유저 전체 로그아웃',
     description: `세션 쿠키에서 deviceId (key: ${CONFIG.cookie.deviceIdName}) 을 읽을 수 있는 경우 해당 디바이스 로그아웃. 그렇지 않은 경우 모든 디바이스에서 로그아웃`,
