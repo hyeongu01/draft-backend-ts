@@ -15,6 +15,7 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
+      transform: true, // 요청을 DTO 인스턴스로 변환 → 기본값 주입 + 타입 변환(@Type) 적용
       // stopAtFirstError: true,
       // exceptionFactory: (errors) =>
       //   new BadRequestException(
@@ -24,7 +25,11 @@ async function bootstrap() {
   );
   const config = new DocumentBuilder()
     .setTitle('Draft Backend TS')
-    .setDescription('Draft Backend TS')
+    .setDescription(
+      'Draft Backend TS\n\n' +
+        '※ category 는 일반 유저가 생성/수정/삭제할 수 없으며 조회만 가능합니다. ' +
+        'category 관리(생성·수정·삭제)는 추후 AdminJS 기반 관리자 도구를 통해 제공될 예정입니다.',
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .addServer(`http://localhost:${CONFIG.PORT}`, 'local')

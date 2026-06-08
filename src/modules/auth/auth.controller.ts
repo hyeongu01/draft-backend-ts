@@ -26,13 +26,9 @@ import { GoogleCallbackDto } from '@/modules/auth/dto/google-callback.dto';
 import { ApiResponseSuccess } from '@/common/decorators/api-response-success.decorator';
 import CONFIG from '@/config/config';
 import {
-  ApiExcludeEndpoint,
-  ApiExtraModels,
   ApiFoundResponse,
   ApiInternalServerErrorResponse,
-  ApiOkResponse,
   ApiOperation,
-  getSchemaPath,
 } from '@nestjs/swagger';
 import { UserResponseType } from '@/modules/users/type/user-response.type';
 
@@ -102,7 +98,7 @@ export class AuthController {
   @ApiOperation({
     summary: '구글 로그인 콜백',
     description:
-      'google oAuth 는 client 의 callback 으로 리다이렉트 되고, 온보딩에서 입력한 닉네임과 인가 코드를 바디로 받아 로그인을 마친다. refreshToken 은 쿠키로, accessToken 은 바디로 반환합니다.',
+      'google oAuth 는 client 의 callback 으로 리다이렉트 되고, 온보딩에서 입력한 닉네임과 인가 코드를 바디로 받아 로그인을 마친다. refreshToken 은 쿠키로, accessToken, user 은 바디로 반환합니다.',
   })
   @ApiResponseSuccess(AccessTokenResponseType)
   async googleOAuthCallback(
@@ -147,22 +143,9 @@ export class AuthController {
   @ApiOperation({
     summary: 'access token 재발급',
     description:
-      'refresh_token HttpOnly 쿠키로 재발급. 새 refreshToken 은 쿠키로 회전되고, 바디엔 accessToken 만 반환합니다.',
+      'refresh_token HttpOnly 쿠키로 재발급. 새 refreshToken 은 쿠키로 회전되고, 바디엔 accessToken, user 가 반환합니다.',
   })
-  @ApiExtraModels(ResponseSuccess, AccessTokenResponseType)
-  @ApiOkResponse({
-    description: 'Success',
-    schema: {
-      allOf: [
-        { $ref: getSchemaPath(ResponseSuccess) },
-        {
-          properties: {
-            data: { $ref: getSchemaPath(AccessTokenResponseType) },
-          },
-        },
-      ],
-    },
-  })
+  @ApiResponseSuccess(AccessTokenResponseType)
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -194,12 +177,20 @@ export class AuthController {
   @Post('logout')
   @HttpCode(200)
   @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'logout - 디바이스 로그아웃 / 유저 전체 로그아웃',
+    description: `세션 쿠키에서 deviceId (key: ${CONFIG.cookie.deviceIdName}) 을 읽을 수 있는 경우 해당 디바이스 로그아웃. 그렇지 않은 경우 모든 디바이스에서 로그아웃`,
+  })
   @ApiResponseSuccess()
   async logout(
     @CurrentUser() user: User,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<ResponseSuccess<{}>> {
-    await this.authService.logout(user);
+    const deviceId: string | undefined =
+      req.cookies?.[CONFIG.cookie.deviceIdName];
+
+    await this.authService.logout(user, deviceId);
     // refresh_token 쿠키 제거 (set 과 동일한 domain/path 여야 삭제됨)
     res.clearCookie(CONFIG.cookie.refreshTokenName, {
       domain: CONFIG.cookie.domain,

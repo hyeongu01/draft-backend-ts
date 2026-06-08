@@ -130,9 +130,13 @@ export class AuthService {
     return this.generateToken(user, deviceId);
   }
 
-  async logout(user: User): Promise<void> {
+  async logout(user: User, deviceId: string | undefined): Promise<void> {
     await this.prismaService.refreshToken.updateMany({
-      where: { userId: user.id, revokedAt: null },
+      where: {
+        userId: user.id,
+        ...(deviceId && { deviceId }),
+        revokedAt: null,
+      },
       data: { revokedAt: new Date() },
     });
   }

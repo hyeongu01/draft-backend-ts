@@ -63,13 +63,13 @@ model Resume {
   content     Json    @db.Json
   likeCount   Int     @default(0) @map("like_count") @db.UnsignedInt
   scrapCount  Int     @default(0) @map("scrap_count") @db.UnsignedInt
-  careerYears Int     @map("career_years") @db.UnsignedInt
+  careerYears Int?    @map("career_years") @db.UnsignedInt
   isPublic    Boolean @default(false) @map("is_public") @db.TinyInt
 
-  userId     String      @map("user_id") @db.Char(26)
-  user       User        @relation(fields: [userId], references: [id])
-  categoryId Int         @map("category_id") @db.UnsignedInt
-  category   JobCategory @relation(fields: [categoryId], references: [id])
+  userId     String       @map("user_id") @db.Char(26)
+  user       User         @relation(fields: [userId], references: [id])
+  categoryId Int?         @map("category_id") @db.UnsignedInt
+  category   JobCategory? @relation(fields: [categoryId], references: [id])
 
   createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)
