@@ -1,0 +1,10 @@
+.env.example
+.idea
+README.md
+
+prisma/generated
+
+node_modules
+.env
+.git
+dist
