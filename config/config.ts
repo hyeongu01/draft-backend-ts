@@ -7,7 +7,7 @@ type ConfigType = {
   google: {
     clientId: string;
     clientSecret: string;
-    redirectUri: string;
+    redirectPath: string;
   };
   jwt: {
     accessSecret: string;
@@ -33,7 +33,7 @@ const CONFIG: ConfigType = {
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    redirectUri: 'http://localhost:3000/auth/google/callback',
+    redirectPath: '/auth/google/callback',
   },
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET!,

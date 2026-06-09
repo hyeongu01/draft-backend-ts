@@ -7,7 +7,7 @@ export class GoogleAuthService {
   private readonly client = new OAuth2Client(
     CONFIG.google.clientId,
     CONFIG.google.clientSecret,
-    CONFIG.google.redirectUri,
+    `${CONFIG.FRONTEND_URL}${CONFIG.google.redirectPath}`,
   );
 
   getAuthUrl(): string {
