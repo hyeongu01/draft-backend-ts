@@ -32,7 +32,7 @@ jobs:
 
       - name: Fail if version tag already exists
         run: |
-          IMAGE="ghcr.io/${{ github.repository_owner }}/draft-backend:v${{ steps.pkg.outputs.version }}"
+          IMAGE="ghcr.io/${{ github.repository_owner }}/draft-backend:${{ steps.pkg.outputs.version }}"
           if docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
             echo "::error::$IMAGE 가 이미 존재합니다. package.json 의 version 을 올리세요."
             exit 1
@@ -67,5 +67,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/draft-backend:v${{ needs.version-validation.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/draft-backend:${{ needs.version-validation.outputs.version }}
             ghcr.io/${{ github.repository_owner }}/draft-backend:latest
