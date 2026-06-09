@@ -17,8 +17,9 @@ export class PrismaService
       await this.$connect();
       await this.$queryRaw`SELECT 1`;
       console.log(`[Prisma] ${CONFIG.DATABASE_URL} connected`);
-    } catch {
+    } catch (e) {
       console.error('[Prisma] Failed to connect', CONFIG.DATABASE_URL);
+      console.error(e);
       process.exit(1);
     }
   }

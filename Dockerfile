@@ -22,6 +22,8 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 HEALTHCHECK --start-period=15s --start-interval=2s \
     CMD wget -qO- http://localhost:3000/health || exit 1
@@ -38,17 +40,7 @@ CMD ["npm", "run", "start:prod"]
 #
 # 멀티아키(amd64 + arm64) 빌드 후 GHCR 로 바로 push
 # 윈도우 빌드 → 라즈베리파이(aarch64) 에서 실행하려면 멀티아키 필수
-# docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/hyeongu01/draft-backend:0.0.1 --push .
+# docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/hyeongu01/draft-backend --push .
 #
 # (라즈베리파이에서) 이미지 pull — 아키텍처에 맞는 arm64 변형이 자동 선택됨
-# docker pull ghcr.io/hyeongu01/draft-backend:0.0.1
-#
-# (라즈베리파이에서) 컨테이너 실행 (이름 지정, 백그라운드, 포트 매핑, env 주입)
-# docker run -d --name draft-backend -p 3000:3000 --env-file .env ghcr.io/hyeongu01/draft-backend:0.0.1
-#
-# 컨테이너 중지 & 삭제
-# docker stop draft-backend
-# docker rm draft-backend
-#
-# 이미지 아키텍처 확인 (멀티아키 매니페스트 확인)
-# docker buildx imagetools inspect ghcr.io/hyeongu01/draft-backend:0.0.1
+# docker pull ghcr.io/hyeongu01/draft-backend
