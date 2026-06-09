@@ -12,6 +12,8 @@ permissions:
 jobs:
   version-validation:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.pkg.outputs.version }}
 
     steps:
       - name: Checkout
@@ -39,6 +41,7 @@ jobs:
 
   build-and-push:
     runs-on: ubuntu-latest
+    needs: version-validation
 
     steps:
       - name: Checkout
@@ -57,10 +60,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Read version from package.json
-        id: pkg
-        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
-
       - name: Build & Push
         uses: docker/build-push-action@v5
         with:
@@ -68,5 +67,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/draft-backend:v${{ steps.pkg.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/draft-backend:v${{ needs.version-validation.outputs.version }}
             ghcr.io/${{ github.repository_owner }}/draft-backend:latest
