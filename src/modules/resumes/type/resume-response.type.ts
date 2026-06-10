@@ -36,12 +36,16 @@ export class ResumeResponseType {
   @ApiPropertyOptional({ type: 'number', minimum: 1 })
   categoryId?: number;
 
+  // TODO: 어떻게 할지 정하기
+  @ApiPropertyOptional()
+  category?: {};
+
   @ApiProperty()
   createdAt: DateFormatObject;
   @ApiProperty()
   updatedAt: DateFormatObject;
 
-  static fromResume(item: Resume): ResumeResponseType {
+  static fromResume(item: ResumeType<['category']>): ResumeResponseType {
     return {
       id: item.id,
       title: item.title,
@@ -53,6 +57,9 @@ export class ResumeResponseType {
       isPublic: item.isPublic,
       userId: item.userId,
       categoryId: item.categoryId ?? undefined,
+      category: item.category
+        ? CategoryResponseType.fromCategory(item.category)
+        : undefined,
       createdAt: dateToDateFormatObject(item.createdAt),
       updatedAt: dateToDateFormatObject(item.updatedAt),
     };

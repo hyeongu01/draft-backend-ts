@@ -25,6 +25,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateResumeDto } from '@/modules/resumes/dto/update-resume.dto';
 import { ApiResponsePaginatedSuccess } from '@/common/decorators/api-response-paginated-success.decorator';
 import { PaginationDto } from '@/common/dto/pagination.dto';
+import { ResumeType } from '@/modules/resumes/resumes.type';
 
 @ApiTags('Resumes (private)')
 @Controller('me/resumes')
@@ -50,7 +51,9 @@ export class ResumesController {
       user,
       createResumeDto,
     );
-    return ResponseSuccess.ok(ResumeResponseType.fromResume(data));
+    return ResponseSuccess.ok(
+      ResumeResponseType.fromResume(data as ResumeType<['category']>),
+    );
   }
 
   @Patch(':id')
@@ -139,7 +142,8 @@ export class ResumesController {
     @CurrentUser() user: User,
     @Param('id') id: string,
   ): Promise<ResponseSuccess<ResumeResponseType>> {
-    const item: Resume | null = await this.resumesService.findItemById(id);
+    const item: ResumeType<['category']> | null =
+      await this.resumesService.findItemById(id);
     if (item?.userId !== user.id)
       throw new NotFoundException('이력서를 찾을 수 없습니다.');
     return ResponseSuccess.ok(ResumeResponseType.fromResume(item));

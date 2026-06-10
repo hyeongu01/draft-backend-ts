@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
-import { Prisma } from '@/prisma/client';
+import { JobCategory, Prisma } from '@/prisma/client';
 import { PaginationDto } from '@/common/dto/pagination.dto';
+import { ResponseSuccess } from '@/common/types/response.type';
 
 @Injectable()
 export class CategoriesService {
