@@ -50,7 +50,7 @@ const CONFIG: ConfigType = {
     secure: process.env.NODE_ENV === 'production',
     // cross-site(프론트≠백엔드 사이트)면 'none' 필요. 'none' 은 secure(HTTPS) 필수.
     // 로컬 same-site 는 'lax'.
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: 'lax',
     deviceIdMaxAge: 400 * 24 * 60 * 60 * 1000, // 400d (브라우저 쿠키 maxAge 상한)
     refreshMaxAge: 24 * 60 * 60 * 1000, // 1d (jwt.refreshExpiresIn 과 일치)
   },
