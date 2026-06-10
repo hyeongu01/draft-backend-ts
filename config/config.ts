@@ -20,6 +20,7 @@ type ConfigType = {
     refreshTokenName: string;
     domain?: string;
     secure: boolean;
+    sameSite: 'lax' | 'strict' | 'none';
     deviceIdMaxAge: number;
     refreshMaxAge: number;
   };
@@ -47,6 +48,9 @@ const CONFIG: ConfigType = {
     // 운영: '.example.com' 처럼 공통 부모 도메인. 로컬: undefined
     domain: process.env.COOKIE_DOMAIN || undefined,
     secure: process.env.NODE_ENV === 'production',
+    // cross-site(프론트≠백엔드 사이트)면 'none' 필요. 'none' 은 secure(HTTPS) 필수.
+    // 로컬 same-site 는 'lax'.
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     deviceIdMaxAge: 400 * 24 * 60 * 60 * 1000, // 400d (브라우저 쿠키 maxAge 상한)
     refreshMaxAge: 24 * 60 * 60 * 1000, // 1d (jwt.refreshExpiresIn 과 일치)
   },

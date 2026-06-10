@@ -45,7 +45,7 @@ export class AuthController {
     return {
       httpOnly: true,
       secure: CONFIG.cookie.secure,
-      sameSite: 'lax',
+      sameSite: CONFIG.cookie.sameSite,
       domain: CONFIG.cookie.domain,
       path: '/',
       maxAge: CONFIG.cookie.deviceIdMaxAge,
@@ -57,7 +57,7 @@ export class AuthController {
     return {
       httpOnly: true,
       secure: CONFIG.cookie.secure,
-      sameSite: 'lax',
+      sameSite: CONFIG.cookie.sameSite,
       domain: CONFIG.cookie.domain,
       path: '/auth',
       maxAge: CONFIG.cookie.refreshMaxAge,
