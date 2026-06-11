@@ -1,5 +1,6 @@
-import { Prisma, Resume } from '@/prisma/client';
+import { Prisma, type Resume, type User } from '@/prisma/client';
 import { CategoryType } from '@/modules/categories/categories.type';
+import { PublicUserResponseType } from '@/modules/users/type/public-user-response.type';
 
 type ResumeRelations = {
   category: true;
@@ -13,4 +14,5 @@ export type ResumeType<
 
 export type ResumeItem = ResumeType & {
   category: CategoryType<['group']> | null;
+  user?: Pick<User, 'nickname'>;
 };

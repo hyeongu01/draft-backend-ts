@@ -6,6 +6,20 @@ import { ResumeItem } from '@/modules/resumes/resumes.type';
 import { UpdateResumeDto } from '@/modules/resumes/dto/update-resume.dto';
 import { PaginationDto } from '@/common/dto/pagination.dto';
 import { GetPublicResumesDto } from '@/modules/resumes/dto/get-public-resumes.dto';
+import { type ResumeInclude } from '@/prisma/models/Resume';
+
+const ResumeIncludePrivateOptions = {
+  category: { include: { group: true } },
+} satisfies ResumeInclude;
+
+const ResumeIncludePublicOptions = {
+  category: { include: { group: true } },
+  user: {
+    select: {
+      nickname: true,
+    },
+  },
+} satisfies ResumeInclude;
 
 @Injectable()
 export class ResumesService {
@@ -34,7 +48,7 @@ export class ResumesService {
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { [sort]: order },
-          include: { category: { include: { group: true } } },
+          include: ResumeIncludePublicOptions,
         }),
         this.prismaService.resume.count({ where: whereOptions }),
       ]);
@@ -44,14 +58,19 @@ export class ResumesService {
   async findPublicItemById(id: string): Promise<ResumeItem | null> {
     return this.prismaService.resume.findUnique({
       where: { id, deletedAt: null, isPublic: true },
-      include: { category: { include: { group: true } } },
+      include: ResumeIncludePublicOptions,
     });
   }
 
-  async findItemById(id: string): Promise<ResumeItem | null> {
-    return this.prismaService.resume.findUnique({
-      where: { id, deletedAt: null },
-      include: { category: { include: { group: true } } },
+  async findItemById(user: User, id: string): Promise<ResumeItem | null> {
+    const whereOptions: Prisma.ResumeWhereInput = {
+      id,
+      userId: user.id,
+      deletedAt: null,
+    };
+    return this.prismaService.resume.findFirst({
+      where: whereOptions,
+      include: ResumeIncludePrivateOptions,
     });
   }
 
@@ -69,7 +88,7 @@ export class ResumesService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { [sort]: order },
-        include: { category: { include: { group: true } } },
+        include: ResumeIncludePrivateOptions,
       }),
       this.prismaService.resume.count({ where: whereOptions }),
     ]);

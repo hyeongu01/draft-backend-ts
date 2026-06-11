@@ -3,6 +3,7 @@ import { DateFormatObject, dateToDateFormatObject } from '@/common/date-format';
 import { type JsonValue } from '@prisma/client/runtime/client';
 import type { ResumeItem } from '@/modules/resumes/resumes.type';
 import { CategoryResponseType } from '@/modules/categories/type/categories-response.type';
+import { PublicUserResponseType } from '@/modules/users/type/public-user-response.type';
 
 export class ResumeResponseType {
   @ApiProperty()
@@ -29,11 +30,8 @@ export class ResumeResponseType {
   @ApiProperty()
   isPublic: boolean;
 
-  @ApiProperty()
-  userId: string;
-
-  @ApiPropertyOptional({ type: 'number', minimum: 1 })
-  categoryId?: number;
+  @ApiPropertyOptional()
+  user?: PublicUserResponseType;
 
   @ApiPropertyOptional()
   category?: CategoryResponseType;
@@ -53,8 +51,7 @@ export class ResumeResponseType {
       scrapCount: item.scrapCount,
       careerYears: item.careerYears ?? undefined,
       isPublic: item.isPublic,
-      userId: item.userId,
-      categoryId: item.categoryId ?? undefined,
+      ...(item.user && { user: { nickname: item.user.nickname ?? 'unknown' } }),
       category: item.category
         ? CategoryResponseType.fromCategory(item.category)
         : undefined,
