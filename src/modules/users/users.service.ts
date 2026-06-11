@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
-import { type User } from '@/prisma/client';
+import { ResumeLike, ResumeScrap, type User } from '@/prisma/client';
 import { UpdateUserDto } from '@/modules/users/dto/update-user.dto';
 import { createHash } from 'crypto';
 
@@ -39,5 +39,17 @@ export class UsersService {
         },
       }),
     ]);
+  }
+
+  async findAllLikes(userId: string): Promise<ResumeLike[]> {
+    return this.prismaService.resumeLike.findMany({
+      where: { userId, resume: { deletedAt: null } },
+    });
+  }
+
+  async findAllScraps(userId: string): Promise<ResumeScrap[]> {
+    return this.prismaService.resumeScrap.findMany({
+      where: { userId, resume: { deletedAt: null } },
+    });
   }
 }
