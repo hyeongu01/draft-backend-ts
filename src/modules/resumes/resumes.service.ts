@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
 import { CreateResumeDto } from '@/modules/resumes/dto/create-resume.dto';
 import { Prisma, Resume, User } from '@/prisma/client';
-import { ResumeType } from '@/modules/resumes/resumes.type';
+import { ResumeItem } from '@/modules/resumes/resumes.type';
 import { UpdateResumeDto } from '@/modules/resumes/dto/update-resume.dto';
 import { PaginationDto } from '@/common/dto/pagination.dto';
 import { GetPublicResumesDto } from '@/modules/resumes/dto/get-public-resumes.dto';
@@ -11,49 +11,54 @@ import { GetPublicResumesDto } from '@/modules/resumes/dto/get-public-resumes.dt
 export class ResumesService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findAllPublicItems(getPublicResumesDto: GetPublicResumesDto) {
+  async findAllPublicItems(
+    getPublicResumesDto: GetPublicResumesDto,
+  ): Promise<{ items: ResumeItem[]; total: number }> {
     const { page, limit, order, sort, minCareerYear, maxCareerYear, groupId } =
       getPublicResumesDto;
     const whereOptions: Prisma.ResumeWhereInput = {
       isPublic: true,
       deletedAt: null,
-      careerYears: {
-        gte: minCareerYear ?? 0,
-        lte: maxCareerYear ?? 100,
-      },
+      ...((minCareerYear !== undefined || maxCareerYear !== undefined) && {
+        careerYears: {
+          gte: minCareerYear ?? 0,
+          lte: maxCareerYear ?? 1000,
+        },
+      }),
       ...(groupId && { category: { groupId } }),
     };
-    const [items, total]: [ResumeType<['category']>[], number] =
+    const [items, total]: [ResumeItem[], number] =
       await this.prismaService.$transaction([
         this.prismaService.resume.findMany({
           where: whereOptions,
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { [sort]: order },
-          include: { category: true },
+          include: { category: { include: { group: true } } },
         }),
         this.prismaService.resume.count({ where: whereOptions }),
       ]);
     return { items, total };
   }
 
-  async findPublicItemById(
-    id: string,
-  ): Promise<ResumeType<['category']> | null> {
+  async findPublicItemById(id: string): Promise<ResumeItem | null> {
     return this.prismaService.resume.findUnique({
       where: { id, deletedAt: null, isPublic: true },
-      include: { category: true },
+      include: { category: { include: { group: true } } },
     });
   }
 
-  async findItemById(id: string): Promise<ResumeType<['category']> | null> {
+  async findItemById(id: string): Promise<ResumeItem | null> {
     return this.prismaService.resume.findUnique({
       where: { id, deletedAt: null },
-      include: { category: true },
+      include: { category: { include: { group: true } } },
     });
   }
 
-  async findAll(user: User, { limit, page, order, sort }: PaginationDto) {
+  async findAll(
+    user: User,
+    { limit, page, order, sort }: PaginationDto,
+  ): Promise<{ items: ResumeItem[]; total: number }> {
     const whereOptions: Prisma.ResumeWhereInput = {
       userId: user.id,
       deletedAt: null,
@@ -64,6 +69,7 @@ export class ResumesService {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { [sort]: order },
+        include: { category: { include: { group: true } } },
       }),
       this.prismaService.resume.count({ where: whereOptions }),
     ]);

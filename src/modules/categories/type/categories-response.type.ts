@@ -27,6 +27,7 @@ export class CategoryResponseType {
   @ApiProperty()
   name: string;
 
+  // TODO: group도 표준 응답 형식으로 변경
   @ApiProperty()
   group: GroupResponseType;
 

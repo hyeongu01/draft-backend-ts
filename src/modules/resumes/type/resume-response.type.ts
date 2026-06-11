@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DateFormatObject, dateToDateFormatObject } from '@/common/date-format';
 import { type JsonValue } from '@prisma/client/runtime/client';
-import { ResumeType } from '@/modules/resumes/resumes.type';
-import { CategoryType } from '@/modules/categories/categories.type';
+import type { ResumeItem } from '@/modules/resumes/resumes.type';
+import { CategoryResponseType } from '@/modules/categories/type/categories-response.type';
 
 export class ResumeResponseType {
   @ApiProperty()
@@ -35,16 +35,15 @@ export class ResumeResponseType {
   @ApiPropertyOptional({ type: 'number', minimum: 1 })
   categoryId?: number;
 
-  // TODO: 어떻게 할지 정하기
   @ApiPropertyOptional()
-  category?: ResumeCategoryResponseType;
+  category?: CategoryResponseType;
 
   @ApiProperty()
   createdAt: DateFormatObject;
   @ApiProperty()
   updatedAt: DateFormatObject;
 
-  static fromResume(item: ResumeType<['category']>): ResumeResponseType {
+  static fromResume(item: ResumeItem): ResumeResponseType {
     return {
       id: item.id,
       title: item.title,
@@ -57,31 +56,8 @@ export class ResumeResponseType {
       userId: item.userId,
       categoryId: item.categoryId ?? undefined,
       category: item.category
-        ? ResumeCategoryResponseType.fromCategory(item.category)
+        ? CategoryResponseType.fromCategory(item.category)
         : undefined,
-      createdAt: dateToDateFormatObject(item.createdAt),
-      updatedAt: dateToDateFormatObject(item.updatedAt),
-    };
-  }
-}
-
-class ResumeCategoryResponseType {
-  @ApiProperty()
-  id: number;
-
-  @ApiProperty()
-  name: string;
-
-  @ApiProperty()
-  createdAt: DateFormatObject;
-
-  @ApiProperty()
-  updatedAt: DateFormatObject;
-
-  static fromCategory(item: CategoryType): ResumeCategoryResponseType {
-    return {
-      id: item.id,
-      name: item.name,
       createdAt: dateToDateFormatObject(item.createdAt),
       updatedAt: dateToDateFormatObject(item.updatedAt),
     };

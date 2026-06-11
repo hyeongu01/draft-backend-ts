@@ -4,7 +4,7 @@ import { PaginationDto } from '@/common/dto/pagination.dto';
 import { Type } from 'class-transformer';
 
 export class GetPublicResumesDto extends PaginationDto {
-  @ApiPropertyOptional({ description: '카테고리 필터' })
+  @ApiPropertyOptional({ description: '카테고리 그룹 필터' })
   @Min(1)
   @Type(() => Number)
   @IsInt()
