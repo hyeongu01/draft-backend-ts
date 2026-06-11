@@ -22,8 +22,6 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 HEALTHCHECK --start-period=15s --start-interval=2s \
     CMD wget -qO- http://localhost:3000/health || exit 1
