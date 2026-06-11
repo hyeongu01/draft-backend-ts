@@ -24,6 +24,13 @@ type ConfigType = {
     deviceIdMaxAge: number;
     refreshMaxAge: number;
   };
+  r2: {
+    accountId: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+    bucketName: string;
+    publicUrl: string;
+  };
 };
 
 const CONFIG: ConfigType = {
@@ -53,6 +60,14 @@ const CONFIG: ConfigType = {
     sameSite: 'lax',
     deviceIdMaxAge: 400 * 24 * 60 * 60 * 1000, // 400d (브라우저 쿠키 maxAge 상한)
     refreshMaxAge: 24 * 60 * 60 * 1000, // 1d (jwt.refreshExpiresIn 과 일치)
+  },
+  r2: {
+    accountId: process.env.R2_ACCOUNT_ID!,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    bucketName: process.env.R2_BUCKET_NAME || 'draft',
+    // 버킷 공개 도메인 (r2.dev 하위 도메인 또는 커스텀 도메인, 끝에 / 없이)
+    publicUrl: process.env.R2_PUBLIC_URL!,
   },
 };
 
