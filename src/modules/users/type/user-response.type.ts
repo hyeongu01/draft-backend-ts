@@ -1,5 +1,5 @@
 import { DateFormatObject, dateToDateFormatObject } from '@/common/date-format';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { User } from '@/prisma/client';
 
 export class UserResponseType {
@@ -21,12 +21,16 @@ export class UserResponseType {
   @ApiProperty({ type: DateFormatObject })
   updatedAt: DateFormatObject;
 
-  static fromUser(user: User) {
+  @ApiProperty({ type: 'string', nullable: true })
+  profileImageUrl: string | null;
+
+  static fromUser(user: User): UserResponseType {
     return {
       id: user.id,
       nickname: user.nickname,
       name: user.name,
       email: user.email,
+      profileImageUrl: user.profileImageUrl,
       createdAt: dateToDateFormatObject(user.createdAt),
       updatedAt: dateToDateFormatObject(user.updatedAt),
     };

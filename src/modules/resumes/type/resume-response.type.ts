@@ -51,7 +51,12 @@ export class ResumeResponseType {
       scrapCount: item.scrapCount,
       careerYears: item.careerYears ?? undefined,
       isPublic: item.isPublic,
-      ...(item.user && { user: { nickname: item.user.nickname ?? 'unknown' } }),
+      ...(item.user && {
+        user: {
+          nickname: item.user.nickname ?? 'unknown',
+          profileImageUrl: item.user.profileImageUrl,
+        },
+      }),
       category: item.category
         ? CategoryResponseType.fromCategory(item.category)
         : undefined,

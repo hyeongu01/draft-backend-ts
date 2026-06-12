@@ -9,10 +9,11 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(ulid()) @db.Char(26)
-  name     String  @db.VarChar(255) // oauth 에서 받아오는 full name
-  nickname String? @db.VarChar(255) // 기본값: null, 온보딩에서 업데이트
-  email    String  @unique @db.VarChar(255) // 탈퇴 시 `removed-${id}@deleted.local` 형식으로 뭉갬
+  id              String  @id @default(ulid()) @db.Char(26)
+  name            String  @db.VarChar(255) // oauth 에서 받아오는 full name
+  nickname        String? @db.VarChar(255) // 기본값: null, 온보딩에서 업데이트
+  email           String  @unique @db.VarChar(255) // 탈퇴 시 `removed-${id}@deleted.local` 형식으로 뭉갬
+  profileImageUrl String? @map("profile_image_url") @db.VarChar(255) // 기본값은 null, null 이면 nickname 의 첫 글자를 활용한 아이콘 사용
 
   createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.DateTime(3)

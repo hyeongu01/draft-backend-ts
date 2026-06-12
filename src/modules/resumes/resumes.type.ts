@@ -14,5 +14,5 @@ export type ResumeType<
 
 export type ResumeItem = ResumeType & {
   category: CategoryType<['group']> | null;
-  user?: Pick<User, 'nickname'>;
+  user?: Pick<User, 'nickname' | 'profileImageUrl'>;
 };

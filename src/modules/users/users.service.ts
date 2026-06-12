@@ -2,11 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
 import { ResumeLike, ResumeScrap, type User } from '@/prisma/client';
 import { UpdateUserDto } from '@/modules/users/dto/update-user.dto';
-import { createHash } from 'crypto';
+import { S3Service } from '@/lib/s3/s3.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   async findOneById(id: string): Promise<User | null> {
     return this.prismaService.user.findFirst({
@@ -14,13 +17,25 @@ export class UsersService {
     });
   }
 
-  async updateItem(id: string, params: UpdateUserDto): Promise<void> {
-    await this.prismaService.user.update({
-      where: { id },
-      data: {
-        ...params,
-      },
+  async updateItem(user: User, params: UpdateUserDto): Promise<User> {
+    const data = { ...params };
+    if (typeof params.profileImageUrl === 'string')
+      data.profileImageUrl = await this.s3Service.moveFile(
+        user.id,
+        params.profileImageUrl,
+      );
+    const updatedUser = await this.prismaService.user.update({
+      where: { id: user.id },
+      data,
     });
+    // 이전 이미지 삭제는 DB 반영 성공 후에만, 실패해도 요청은 성공 처리 (고아 객체가 깨진 아바타보다 낫다)
+    if (
+      params.profileImageUrl !== undefined &&
+      user.profileImageUrl &&
+      user.profileImageUrl !== updatedUser.profileImageUrl
+    )
+      await this.s3Service.deleteFile(user.profileImageUrl).catch(() => {});
+    return updatedUser;
   }
 
   async deleteItem(id: string): Promise<void> {

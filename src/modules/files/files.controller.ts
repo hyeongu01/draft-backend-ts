@@ -33,8 +33,9 @@ export class FilesController {
   @ApiOperation({
     summary: 'Upload a profile image',
     description:
-      '프로필 이미지를 512x512 webp로 리사이즈하여 업로드하고 공개 URL을 반환합니다. ' +
-      'URL 형식: "https://....r2.dev/{userId}/{ulid}/512x512.webp" (업로드마다 ulid가 새로 생성됨). ' +
+      '프로필 이미지를 512x512 webp로 리사이즈하여 임시(temp) 경로에 업로드하고 임시 공개 URL을 반환합니다. ' +
+      'URL 형식: "{R2 공개 URL}/temp/{ulid}/512x512.webp" (업로드마다 ulid가 새로 생성됨). ' +
+      '이 URL을 PUT /users/me의 profileImageUrl로 전달해야 영구 경로로 이동되어 프로필에 반영됩니다. ' +
       '허용 형식: jpeg/png/webp/gif/avif, 최대 5MB. ' +
       '추후 필요하다면 여러가지 사이즈로 저장 후 배열로 리턴하는 것도 고려중',
   })
@@ -58,7 +59,7 @@ export class FilesController {
     @CurrentUser() user: User,
     @UploadedFile(ProfileImageValidationPipe) file: Express.Multer.File,
   ): Promise<ResponseSuccess<ProfileImageUploadResponseType>> {
-    const filePath = `${user.id}/${ulid()}`;
+    const filePath = this.s3Service.getProfileImagePath();
     const profileImageUrl: string = await this.s3Service.uploadProfileImage(
       file,
       filePath,

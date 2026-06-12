@@ -6,6 +6,7 @@ import { ResumeLike, ResumeScrap, type User } from '@/prisma/client';
 import { UsersService } from '@/modules/users/users.service';
 import { UpdateUserDto } from '@/modules/users/dto/update-user.dto';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiInternalServerErrorResponse,
   ApiOperation,
@@ -30,13 +31,31 @@ export class UsersController {
   @Put('me')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiResponseSuccess()
+  @ApiOperation({
+    summary: 'update user',
+    description:
+      '현재 로그인한 유저의 프로필을 수정합니다. 전달한 필드만 부분 수정됩니다. ' +
+      'nickname: 2~100자. ' +
+      'profileImageUrl: 파일 업로드 API(POST /files/profile-image/upload)가 반환한 임시(temp) URL을 전달하면 ' +
+      '영구 경로("{R2 공개 URL}/profiles/{userId}/...")로 이동되어 저장되며, 응답에는 이동된 최종 URL이 담깁니다. ' +
+      'null을 전달하면 프로필 이미지가 해제됩니다. ' +
+      '이미지 변경/해제 시 이전 이미지는 R2에서 삭제됩니다.',
+  })
+  @ApiResponseSuccess(UserResponseType)
+  @ApiBadRequestResponse({
+    description:
+      'profileImageUrl이 유효하지 않은 경우 — 버킷 외부 URL이거나, temp URL이 아니거나, ' +
+      '임시 파일이 만료/삭제되어 존재하지 않는 경우(다시 업로드 필요)',
+  })
   async updateMyProfile(
     @CurrentUser() user: User,
     @Body() updateUserDto: UpdateUserDto,
-  ): Promise<ResponseSuccess<{}>> {
-    await this.usersService.updateItem(user.id, updateUserDto);
-    return ResponseSuccess.ok({});
+  ): Promise<ResponseSuccess<UserResponseType>> {
+    const updatedUser: User = await this.usersService.updateItem(
+      user,
+      updateUserDto,
+    );
+    return ResponseSuccess.ok(UserResponseType.fromUser(updatedUser));
   }
 
   @Delete('me')

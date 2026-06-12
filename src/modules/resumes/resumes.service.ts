@@ -17,6 +17,7 @@ const ResumeIncludePublicOptions = {
   user: {
     select: {
       nickname: true,
+      profileImageUrl: true,
     },
   },
 } satisfies ResumeInclude;
