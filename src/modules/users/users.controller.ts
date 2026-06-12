@@ -146,4 +146,32 @@ export class UsersController {
       },
     );
   }
+
+  @Get('me/scraps/resumes')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "user's scraps resumes",
+    description:
+      '현재 로그인한 유저가 스크랩한 이력서 목록을 페이지네이션으로 반환합니다. ' +
+      '공개(isPublic=true) 상태인 이력서만 포함되며, 스크랩 이후 비공개로 전환되거나 삭제된 이력서는 목록에서 제외됩니다. ' +
+      'page/limit/sort/order 쿼리 파라미터로 페이지와 정렬을 제어하고, 스크랩한 이력서가 없으면 빈 배열을 반환합니다.',
+  })
+  @ApiResponsePaginatedSuccess(ResumeResponseType)
+  async getScrapResumes(
+    @CurrentUser() user: User,
+    @Query() paginationDto: PaginationDto,
+  ): Promise<ResponsePaginatedSuccess<ResumeResponseType>> {
+    const { items, total } = await this.usersService.findAllScrapResumes(
+      user.id,
+      paginationDto,
+    );
+    return new ResponsePaginatedSuccess<ResumeResponseType>(
+      items.map(ResumeResponseType.fromResume),
+      {
+        ...paginationDto,
+        total,
+      },
+    );
+  }
 }

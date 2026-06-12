@@ -74,11 +74,36 @@ export class UsersService {
 
   async findAllLikeResumes(
     userId: string,
-    paginationDto: PaginationDto,
+    { page, limit, sort, order }: PaginationDto,
   ): Promise<{ items: ResumeItem[]; total: number }> {
-    const { page, limit, sort, order } = paginationDto;
     const whereOptions: ResumeWhereInput = {
       likes: { some: { userId } },
+      deletedAt: null,
+      isPublic: true,
+    };
+
+    const [items, total]: [items: ResumeItem[], total: number] =
+      await this.prismaService.$transaction([
+        this.prismaService.resume.findMany({
+          where: whereOptions,
+          include: ResumeIncludePublicOptions,
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { [sort]: order },
+        }),
+        this.prismaService.resume.count({
+          where: whereOptions,
+        }),
+      ]);
+    return { items, total };
+  }
+
+  async findAllScrapResumes(
+    userId: string,
+    { page, limit, sort, order }: PaginationDto,
+  ): Promise<{ items: ResumeItem[]; total: number }> {
+    const whereOptions: ResumeWhereInput = {
+      scraps: { some: { userId } },
       deletedAt: null,
       isPublic: true,
     };
