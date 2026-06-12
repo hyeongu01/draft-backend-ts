@@ -12,7 +12,7 @@ const ResumeIncludePrivateOptions = {
   category: { include: { group: true } },
 } satisfies ResumeInclude;
 
-const ResumeIncludePublicOptions = {
+export const ResumeIncludePublicOptions = {
   category: { include: { group: true } },
   user: {
     select: {

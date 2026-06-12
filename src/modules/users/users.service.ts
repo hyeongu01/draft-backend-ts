@@ -3,6 +3,10 @@ import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
 import { ResumeLike, ResumeScrap, type User } from '@/prisma/client';
 import { UpdateUserDto } from '@/modules/users/dto/update-user.dto';
 import { S3Service } from '@/lib/s3/s3.service';
+import { ResumeItem } from '@/modules/resumes/resumes.type';
+import { PaginationDto } from '@/common/dto/pagination.dto';
+import { ResumeIncludePublicOptions } from '@/modules/resumes/resumes.service';
+import { ResumeWhereInput } from '@/prisma/models/Resume';
 
 @Injectable()
 export class UsersService {
@@ -66,5 +70,32 @@ export class UsersService {
     return this.prismaService.resumeScrap.findMany({
       where: { userId, resume: { deletedAt: null } },
     });
+  }
+
+  async findAllLikeResumes(
+    userId: string,
+    paginationDto: PaginationDto,
+  ): Promise<{ items: ResumeItem[]; total: number }> {
+    const { page, limit, sort, order } = paginationDto;
+    const whereOptions: ResumeWhereInput = {
+      likes: { some: { userId } },
+      deletedAt: null,
+      isPublic: true,
+    };
+
+    const [items, total]: [items: ResumeItem[], total: number] =
+      await this.prismaService.$transaction([
+        this.prismaService.resume.findMany({
+          where: whereOptions,
+          include: ResumeIncludePublicOptions,
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { [sort]: order },
+        }),
+        this.prismaService.resume.count({
+          where: whereOptions,
+        }),
+      ]);
+    return { items, total };
   }
 }
