@@ -6,6 +6,11 @@ import {
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
 import { CreateChatRoomDto } from '@/modules/chats/dto/create-chat-room.dto';
 import { ChatRoom, Prisma, User } from '@/prisma/client';
+import {
+  chatRoomListInclude,
+  ChatRoomListItem,
+} from '@/modules/chats/chats.type';
+import { PaginationDto } from '@/common/dto/pagination.dto';
 
 @Injectable()
 export class ChatsService {
@@ -67,5 +72,27 @@ export class ChatsService {
     }
   }
 
-  async findAllChatRooms(user: User) {}
+  async findAllChatRooms(
+    user: User,
+    { page, limit, sort, order }: PaginationDto,
+  ): Promise<{ items: ChatRoomListItem[]; total: number }> {
+    const whereOptions = {
+      participants: {
+        some: { userId: user.id, leftAt: null },
+      },
+    } satisfies Prisma.ChatRoomWhereInput;
+    const [items, total] = await this.prismaService.$transaction([
+      this.prismaService.chatRoom.findMany({
+        where: whereOptions,
+        include: chatRoomListInclude,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { [sort]: order },
+      }),
+      this.prismaService.chatRoom.count({
+        where: whereOptions,
+      }),
+    ]);
+    return { items, total };
+  }
 }

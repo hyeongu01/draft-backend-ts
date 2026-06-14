@@ -11,10 +11,14 @@ import { ApiResponseSuccess } from '@/common/decorators/api-response-success.dec
 import type { User } from '@/prisma/client';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CreateChatRoomDto } from '@/modules/chats/dto/create-chat-room.dto';
-import { ResponseSuccess } from '@/common/types/response.type';
+import {
+  ResponsePaginatedSuccess,
+  ResponseSuccess,
+} from '@/common/types/response.type';
 import { CreateChatRoomResponseType } from '@/modules/chats/type/create-chat-room-response.type';
 import { ApiResponsePaginatedSuccess } from '@/common/decorators/api-response-paginated-success.decorator';
 import { PaginationDto } from '@/common/dto/pagination.dto';
+import { ChatRoomResponseType } from '@/modules/chats/type/chat-room-response.type';
 
 @Controller('chats')
 export class ChatsController {
@@ -48,13 +52,30 @@ export class ChatsController {
     return ResponseSuccess.ok({ roomId });
   }
 
+  // TODO: lastMessage, unreadCount 추가
   @Get()
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({})
-  // @ApiResponsePaginatedSuccess()
+  @ApiOperation({
+    summary: '내 채팅방 목록 조회',
+    description:
+      '로그인 유저가 참여 중인 (나가지 않음, leftAt=null) 채팅방을 페이지네이션으로 조회.' +
+      '최근 생성순(createdAt desc) 으로 정렬되며, 각 방에는 상대방 (opponent) 정보가 포함된다.',
+  })
+  @ApiResponsePaginatedSuccess(ChatRoomResponseType)
   async getMyChatRooms(
     @CurrentUser() user: User,
     @Query() paginationDto: PaginationDto,
-  ) {}
+  ) {
+    const { items, total } = await this.chatsService.findAllChatRooms(
+      user,
+      paginationDto,
+    );
+    return new ResponsePaginatedSuccess<ChatRoomResponseType>(
+      items.map((item) =>
+        ChatRoomResponseType.fromChatRoomListItem(item, user.id),
+      ),
+      { ...paginationDto, total },
+    );
+  }
 }
