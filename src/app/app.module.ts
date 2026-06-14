@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ResumesModule } from '@/modules/resumes/resumes.module';
 import { CategoriesModule } from '@/modules/categories/categories.module';
 import { FilesModule } from '@/modules/files/files.module';
+import { ChatsModule } from '@/modules/chats/chats.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { FilesModule } from '@/modules/files/files.module';
     ResumesModule,
     CategoriesModule,
     FilesModule,
+    ChatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
