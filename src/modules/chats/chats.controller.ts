@@ -19,6 +19,7 @@ import { CreateChatRoomResponseType } from '@/modules/chats/type/create-chat-roo
 import { ApiResponsePaginatedSuccess } from '@/common/decorators/api-response-paginated-success.decorator';
 import { PaginationDto } from '@/common/dto/pagination.dto';
 import { ChatRoomResponseType } from '@/modules/chats/type/chat-room-response.type';
+import { CreateChatMessageDto } from '@/modules/chats/dto/create-chat-message.dto';
 
 @Controller('chats')
 export class ChatsController {
@@ -52,7 +53,6 @@ export class ChatsController {
     return ResponseSuccess.ok({ roomId });
   }
 
-  // TODO: lastMessage, unreadCount 추가
   @Get()
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
@@ -77,5 +77,27 @@ export class ChatsController {
       ),
       { ...paginationDto, total },
     );
+  }
+
+  @Post('messages')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'create a chat message',
+    description:
+      '채팅방(roomId)에 메시지를 전송합니다. 인증이 필요합니다. ' +
+      '요청자가 해당 방의 참여자가 아니면 404 를 반환합니다. ' +
+      '전송 시 방의 lastMessagedAt 이 현재 시각으로, lastMessageSnapshot 이 메시지 앞 255자로 갱신됩니다. ' +
+      '방에서 나갔던(leftAt 기록) 참여자는 재참여 처리되어 joinedAt 이 갱신되고 leftAt·lastReadAt 이 초기화됩니다(상대방이 다시 목록에서 방을 볼 수 있게 됨). ' +
+      'message 는 2자 이상 5000자 이하여야 하고, roomId 는 26자 ULID 형식이어야 합니다.',
+  })
+  @ApiResponseSuccess()
+  @ApiNotFoundResponse({ description: '채팅방을 찾을 수 없습니다.' })
+  async createChatMessage(
+    @CurrentUser() user: User,
+    @Body() createChatMessageDto: CreateChatMessageDto,
+  ) {
+    await this.chatsService.createChatMessage(user, createChatMessageDto);
+    return ResponseSuccess.ok({});
   }
 }

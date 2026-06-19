@@ -12,7 +12,9 @@ export const chatRoomListInclude = {
 
 export type ChatRoomListItem = Prisma.ChatRoomGetPayload<{
   include: typeof chatRoomListInclude;
-}>;
+}> & {
+  unreadCount: number;
+};
 
 export type OpponentUser = {
   id: string;

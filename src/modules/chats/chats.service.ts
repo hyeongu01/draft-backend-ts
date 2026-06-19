@@ -11,6 +11,7 @@ import {
   ChatRoomListItem,
 } from '@/modules/chats/chats.type';
 import { PaginationDto } from '@/common/dto/pagination.dto';
+import { CreateChatMessageDto } from '@/modules/chats/dto/create-chat-message.dto';
 
 @Injectable()
 export class ChatsService {
@@ -76,23 +77,85 @@ export class ChatsService {
     user: User,
     { page, limit, sort, order }: PaginationDto,
   ): Promise<{ items: ChatRoomListItem[]; total: number }> {
-    const whereOptions = {
+    const chatRoomWhereOptions = {
       participants: {
         some: { userId: user.id, leftAt: null },
       },
     } satisfies Prisma.ChatRoomWhereInput;
     const [items, total] = await this.prismaService.$transaction([
       this.prismaService.chatRoom.findMany({
-        where: whereOptions,
+        where: chatRoomWhereOptions,
         include: chatRoomListInclude,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { [sort]: order },
       }),
       this.prismaService.chatRoom.count({
-        where: whereOptions,
+        where: chatRoomWhereOptions,
       }),
     ]);
-    return { items, total };
+    const itemsWithUnread = await Promise.all(
+      items.map(async (room) => {
+        const me = room.participants.find((p) => p.userId === user.id)!;
+        const since = me.lastReadAt ?? me.joinedAt;
+        const unreadCount = await this.prismaService.chatMessage.count({
+          where: {
+            roomId: room.id,
+            userId: { not: user.id },
+            createdAt: since ? { gt: since } : undefined,
+          },
+        });
+        return { ...room, unreadCount };
+      }),
+    );
+    return { items: itemsWithUnread, total };
+  }
+
+  async createChatMessage(
+    user: User,
+    createChatMessageDto: CreateChatMessageDto,
+  ) {
+    const now: Date = new Date();
+    const room = await this.prismaService.chatRoom.findUnique({
+      where: {
+        id: createChatMessageDto.roomId,
+        participants: {
+          some: {
+            userId: user.id,
+          },
+        },
+      },
+    });
+    if (!room) throw new NotFoundException('채팅방을 찾을 수 없습니다.');
+
+    await this.prismaService.$transaction([
+      this.prismaService.chatRoom.update({
+        where: {
+          id: createChatMessageDto.roomId,
+        },
+        data: {
+          lastMessagedAt: now,
+          lastMessageSnapshot: createChatMessageDto.message.slice(0, 255),
+        },
+      }),
+      this.prismaService.chatMessage.create({
+        data: {
+          userId: user.id,
+          content: createChatMessageDto.message,
+          roomId: createChatMessageDto.roomId,
+        },
+      }),
+      this.prismaService.chatRoomParticipant.updateMany({
+        where: {
+          roomId: createChatMessageDto.roomId,
+          leftAt: { not: null },
+        },
+        data: {
+          joinedAt: now,
+          leftAt: null,
+          lastReadAt: null,
+        },
+      }),
+    ]);
   }
 }

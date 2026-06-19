@@ -9,10 +9,14 @@ class OpponentResponseType implements OpponentUser {
   @ApiProperty()
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: 'string', nullable: true, description: '유저 닉네임' })
   nickname: string | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+    description: '유저 프로필 이미지 url',
+  })
   profileImageUrl: string | null;
 }
 
@@ -23,11 +27,17 @@ export class ChatRoomResponseType {
   @ApiProperty()
   createdAt: DateFormatObject;
 
-  @ApiProperty()
-  updatedAt: DateFormatObject;
+  @ApiProperty({ type: DateFormatObject })
+  lastMessagedAt: DateFormatObject;
+
+  @ApiProperty({ type: 'string', nullable: true })
+  lastMessageSnapshot: string | null;
 
   @ApiProperty()
   opponent: OpponentResponseType;
+
+  @ApiProperty()
+  unreadCount: number;
 
   static fromChatRoomListItem(
     item: ChatRoomListItem,
@@ -36,8 +46,10 @@ export class ChatRoomResponseType {
     return {
       id: item.id,
       createdAt: dateToDateFormatObject(item.createdAt),
-      updatedAt: dateToDateFormatObject(item.updatedAt),
-      opponent: item.participants.filter((p) => p.userId !== userId)[0].user,
+      lastMessagedAt: dateToDateFormatObject(item.lastMessagedAt),
+      lastMessageSnapshot: item.lastMessageSnapshot,
+      opponent: item.participants.find((p) => p.userId !== userId)!.user,
+      unreadCount: item.unreadCount,
     };
   }
 }
