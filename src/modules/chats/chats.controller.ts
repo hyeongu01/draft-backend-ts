@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ChatsService } from '@/modules/chats/chats.service';
 import { AuthGuard } from '@/common/guards/auth/auth.guard';
 import {
@@ -20,6 +29,7 @@ import { ApiResponsePaginatedSuccess } from '@/common/decorators/api-response-pa
 import { PaginationDto } from '@/common/dto/pagination.dto';
 import { ChatRoomResponseType } from '@/modules/chats/type/chat-room-response.type';
 import { CreateChatMessageDto } from '@/modules/chats/dto/create-chat-message.dto';
+import { ChatRoomDetailResponse } from '@/modules/chats/type/chat-room-detail.response';
 
 @Controller('chats')
 export class ChatsController {
@@ -77,6 +87,51 @@ export class ChatsController {
       ),
       { ...paginationDto, total },
     );
+  }
+
+  @Get(':id')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '내 채팅방 상세 조회',
+    description:
+      '로그인 유저가 참여 중인(나가지 않음, leftAt=null) 특정 채팅방(:id)의 상세 정보를 조회합니다. 인증이 필요합니다. ' +
+      '응답에는 상대방(opponent) 정보와 해당 방의 메시지 목록(chatMessages)이 포함됩니다. ' +
+      '존재하지 않거나, 요청자가 참여자가 아니거나, 이미 나간 방이면 404 를 반환합니다. ' +
+      ':id 는 26자 ULID 형식의 roomId 입니다.',
+  })
+  @ApiResponseSuccess(ChatRoomDetailResponse)
+  @ApiNotFoundResponse({ description: '채팅방을 찾을 수 없습니다.' })
+  async getMyChatRoomDetail(
+    @CurrentUser() user: User,
+    @Param('id') roomId: string,
+  ): Promise<ResponseSuccess<ChatRoomDetailResponse>> {
+    const item = await this.chatsService.getChatRoomDetail(user.id, roomId);
+    if (!item) throw new NotFoundException('채팅방을 찾을 수 없습니다.');
+    return ResponseSuccess.ok(
+      ChatRoomDetailResponse.fromChatRoom(user.id, item),
+    );
+  }
+
+  @Post(':id/read')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '채팅방 읽음 처리',
+    description:
+      '로그인 유저가 참여 중인(나가지 않음, leftAt=null) 채팅방(:id)의 lastReadAt 을 현재 시각으로 갱신합니다. 인증이 필요합니다. ' +
+      '이후 목록 조회의 unreadCount 가 0 으로 초기화됩니다. ' +
+      '존재하지 않거나, 요청자가 참여자가 아니거나, 이미 나간 방이면 404 를 반환합니다. ' +
+      ':id 는 26자 ULID 형식의 roomId 입니다.',
+  })
+  @ApiResponseSuccess()
+  @ApiNotFoundResponse({ description: '채팅방을 찾을 수 없습니다.' })
+  async markChatRoomAsRead(
+    @CurrentUser() user: User,
+    @Param('id') roomId: string,
+  ) {
+    await this.chatsService.markChatRoomAsRead(user.id, roomId);
+    return ResponseSuccess.ok({});
   }
 
   @Post('messages')

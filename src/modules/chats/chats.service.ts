@@ -5,8 +5,10 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/lib/prisma/prisma/prisma.service';
 import { CreateChatRoomDto } from '@/modules/chats/dto/create-chat-room.dto';
-import { ChatRoom, Prisma, User } from '@/prisma/client';
+import { ChatRoom, ChatRoomParticipant, Prisma, User } from '@/prisma/client';
 import {
+  ChatRoomDetail,
+  chatRoomDetailInclude,
   chatRoomListInclude,
   ChatRoomListItem,
 } from '@/modules/chats/chats.type';
@@ -109,6 +111,41 @@ export class ChatsService {
       }),
     );
     return { items: itemsWithUnread, total };
+  }
+
+  async getChatRoomDetail(
+    userId: string,
+    roomId: string,
+  ): Promise<ChatRoomDetail | null> {
+    const participant: ChatRoomParticipant | null =
+      await this.prismaService.chatRoomParticipant.findUnique({
+        where: {
+          roomId_userId: { roomId, userId },
+          leftAt: null,
+        },
+      });
+    if (participant === null)
+      throw new NotFoundException('채팅방을 찾을 수 없습니다.');
+
+    return this.prismaService.chatRoom.findUnique({
+      where: { id: roomId, participants: { some: { leftAt: null } } },
+      include: {
+        ...chatRoomDetailInclude,
+        chatMessages: {
+          where: { createdAt: { gt: participant.joinedAt } },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+  }
+
+  async markChatRoomAsRead(userId: string, roomId: string): Promise<void> {
+    const { count } = await this.prismaService.chatRoomParticipant.updateMany({
+      where: { roomId, userId, leftAt: null },
+      data: { lastReadAt: new Date() },
+    });
+    if (count === 0)
+      throw new NotFoundException('채팅방을 찾을 수 없습니다.');
   }
 
   async createChatMessage(

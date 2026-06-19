@@ -5,7 +5,7 @@ import {
   type OpponentUser,
 } from '@/modules/chats/chats.type';
 
-class OpponentResponseType implements OpponentUser {
+export class OpponentResponseType implements OpponentUser {
   @ApiProperty()
   id: string;
 
