@@ -25,6 +25,9 @@ model User {
   likes   ResumeLike[]
   scraps  ResumeScrap[]
 
+  chatMessages         ChatMessage[]
+  chatRoomParticipants ChatRoomParticipant[]
+
   @@map("users")
 }
 
@@ -134,4 +137,48 @@ model JobCategory {
 
   @@unique([name, groupId])
   @@map("job_categories")
+}
+
+model ChatRoom {
+  id      String @id @default(ulid()) @db.Char(26)
+  pairKey String @unique @map("pair_key") @db.Char(53) // "{min}:{max}"
+
+  createdAt           DateTime @default(now()) @map("created_at") @db.DateTime(3) // 채팅방이 생성된 시간
+  lastMessagedAt      DateTime @default(now()) @map("last_messaged_at") @db.DateTime(3)
+  lastMessageSnapshot String?  @map("last_message_snapshot") @db.VarChar(255)
+
+  chatMessages ChatMessage[]
+  participants ChatRoomParticipant[]
+
+  @@map("chat_rooms")
+}
+
+model ChatRoomParticipant {
+  roomId     String    @map("room_id") @db.Char(26)
+  userId     String    @map("user_id") @db.Char(26)
+  joinedAt   DateTime  @default(now()) @map("joined_at") @db.DateTime(3)
+  leftAt     DateTime? @map("left_at") @db.DateTime(3)
+  lastReadAt DateTime? @map("last_read_at") @db.DateTime(3)
+
+  room ChatRoom @relation(fields: [roomId], references: [id])
+  user User     @relation(fields: [userId], references: [id])
+
+  @@id([roomId, userId])
+  @@index([userId, leftAt])
+  @@map("chat_room_participants")
+}
+
+model ChatMessage {
+  id      String @id @default(ulid()) @db.Char(26)
+  userId  String @map("user_id") @db.Char(26)
+  content String @db.Text
+  roomId  String @map("room_id") @db.Char(26)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  user User     @relation(fields: [userId], references: [id])
+  room ChatRoom @relation(fields: [roomId], references: [id])
+
+  @@index([roomId, createdAt])
+  @@map("chat_messages")
 }
